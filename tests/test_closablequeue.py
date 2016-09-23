@@ -5,6 +5,7 @@ from gevent import queue
 
 import functools
 import pytest
+import random
 
 
 def repeat(n=10):
@@ -67,11 +68,9 @@ def test_cq_getter_unstuck():
         trigger_close.put_nowait(1)
         cq.get()
 
-    def closer():
-        for _ in trigger_close:
-            cq.close()
-
     w = gevent.spawn(blocked_reader)
+
+    trigger_close.get()
     cq.close()
 
     w.join()
@@ -149,3 +148,79 @@ def test_cq_racy_put():
     else:
         # assert False
         assert got is StopIteration
+
+
+@repeat(n=100)
+def test_cq_maxsize_racy():
+    """
+    Tries to break a queue with maxsize
+    """
+
+    maxsize = random.randint(1, 3)
+    n_getters = random.randint(50, 100)
+    n_putters = random.randint(50, 100)
+
+    cq = ClosableQueue(fuzz=0.001, maxsize=maxsize)
+    q_got = queue.Queue()
+    q_put_result = queue.Queue()
+
+    def closer():
+        gevent.sleep(random.uniform(0, 0.01))
+        cq.close()
+
+    def getter():
+        gevent.sleep(random.uniform(0, 0.01))
+        try:
+            q_got.put_nowait(cq.get())
+        except Exception as exc:
+            q_got.put_nowait(exc)
+
+    def putter():
+        gevent.sleep(random.uniform(0, 0.01))
+        try:
+            cq.put_nowait(1)
+            q_put_result.put(True)
+        except Exception:
+            q_put_result.put(False)
+
+    workers = set()
+
+    for _ in range(n_putters):
+        workers.add(gevent.spawn(putter))
+
+    for _ in range(n_getters):
+        workers.add(gevent.spawn(getter))
+
+    workers.add(gevent.spawn(closer))
+    gevent.wait(workers)
+
+    q_put_result.put(StopIteration)
+    n_ok_put = sum(1 for b in q_put_result if b)
+
+    # Items never claimed by any getter
+    n_left_on_queue = sum(1 for _ in cq)
+    n_ungettable = max(0, n_ok_put - n_getters)
+    assert n_left_on_queue == n_ungettable
+
+    # Items claimed by some getter
+    # Can't loop due to StopIteration behaviour
+    n_got = 0
+    n_stop_iter = 0
+    q_got.put('last')
+    while True:
+        value = q_got.get()
+        if value == 'last':
+            break
+        elif value == StopIteration:
+            n_stop_iter = n_stop_iter + 1
+        elif value == 1:
+            n_got = n_got + 1
+        else:
+            raise value
+
+    # Got as many items on q_got as there were getters spawned
+    assert n_stop_iter + n_got == n_getters
+
+    # No items lost
+    n_ok_get = n_left_on_queue + n_got
+    assert n_ok_get == n_ok_put
