@@ -1,8 +1,8 @@
 from setuptools import setup
 import sys
 
-long_description = None
-if 'upload' in sys.argv or 'register' in sys.argv:
+long_description = 'nopandoc'
+if 'bdist_wheel' in sys.argv:
     from pypandoc import convert
     long_description = convert('README.md', 'rst')
 
