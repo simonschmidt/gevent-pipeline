@@ -97,19 +97,19 @@ def test_pipeline():
     assert 100 == sum(i for i in q_out)
 
 
-def test_pipeline_reduce():
+def test_pipeline_fold():
     def add(x, y):
         gevent.sleep(random.uniform(0, 0.001))
         return x + y
 
     x = (Pipeline()
          .from_iter(range(0))
-         .reduce(add, x0=7))
+         .fold(add, x0=7))
     assert x == 7
 
     x = (Pipeline()
          .from_iter(range(10))
-         .reduce(add, x0=7, n_workers=8))
+         .fold(add, x0=7, n_workers=8))
     assert x == 52
 
 
