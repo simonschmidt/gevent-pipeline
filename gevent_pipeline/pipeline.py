@@ -92,7 +92,7 @@ class Pipeline:
     ...         .from_iter(range(100))\\
     ...         .filter(only_odd, n_workers=10)\\
     ...         .map(double, n_workers=8)\\
-    ...         .reduce(operator.add, x0=0, n_workers=5)
+    ...         .fold(operator.add, x0=0, n_workers=5)
     5000
 
     The above is functionally equivalent to:
@@ -250,12 +250,12 @@ class Pipeline:
         g = worker()(f)
         return self.chain_workers(g, *args, **kwargs)
 
-    def reduce(self, f, x0, *args, **kwargs):
+    def fold(self, f, x0, *args, **kwargs):
         """
         Reduce pipe to a single value.
         Will block until done
 
-        Returns: reduced value
+        Returns: folded value
         """
         def g(q_in, q_out, q_done):
             # 0-length protection
@@ -292,7 +292,7 @@ class Pipeline:
 
         result = q_out.get()
         if q_out.get() is not StopIteration:
-            raise RuntimeError("Unexpected data on reduced output channel")
+            raise RuntimeError("Unexpected data on foldd output channel")
         return result
 
     def join(self):

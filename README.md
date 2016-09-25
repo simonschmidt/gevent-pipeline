@@ -25,7 +25,7 @@ def sample(b):
     .from_iter(repeat(1, times=200))
     .map(sample, n_workers=100)
     .filter(lambda x: x < 0.5)
-    .reduce(max, x0=0, n_workers=50))
+    .fold(max, x0=0, n_workers=50))
 ```
 
 
@@ -47,7 +47,7 @@ Example:
 ...         .from_iter(range(100))
 ...         .filter(only_odd, n_workers=10)
 ...         .map(double, n_workers=8)
-...         .reduce(operator.add, x0=0, n_workers=5))
+...         .fold(operator.add, x0=0, n_workers=5))
 5000
 ```
 

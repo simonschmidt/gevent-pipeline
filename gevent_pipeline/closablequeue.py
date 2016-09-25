@@ -68,7 +68,6 @@ class ClosableQueue(queue.Queue):
         gevent.spawn(self._unstick)
 
     def put(self, item, *args, **kwargs):
-
         if self._closed:
             raise RuntimeError("Cannot put to a closed queue")
 
