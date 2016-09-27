@@ -125,6 +125,8 @@ def test_pipeline_fromto_iter():
     l = sorted(p)
     assert l == [i*i for i in range(10)]
 
+    p.join()
+
 
 def test_pipeline_sloppy_map():
     @worker(exception_handler=forward_input)
