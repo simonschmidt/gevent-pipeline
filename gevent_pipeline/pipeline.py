@@ -221,7 +221,7 @@ class Pipeline:
                 for value in iter_:
                     q_out.put(value)
             finally:
-                q_out.close()
+                q_done.put(None)
 
         return self.chain_workers(loader, *args, **kwargs)
 
@@ -292,7 +292,7 @@ class Pipeline:
 
         result = q_out.get()
         if q_out.get() is not StopIteration:
-            raise RuntimeError("Unexpected data on foldd output channel")
+            raise RuntimeError("Unexpected data on fold output channel")
         return result
 
     def join(self):
