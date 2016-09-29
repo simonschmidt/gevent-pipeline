@@ -3,7 +3,7 @@ Multi-worker pipelines with gevent.
 ### Installation
 
 ```bash
-pip install gevent_pipeline
+pip install gevent-pipeline
 ```
 
 ## Example
