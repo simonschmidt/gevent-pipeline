@@ -91,7 +91,13 @@ class ClosablePriorityQueue(queue.PriorityQueue, ClosableQueue):
     """
     Mixes gevent's PriorityQueue with the ClosableQueue
 
-    Set as q_out to any pipeline step and join to order the input queue for the
-    next stage
+    This can be useful for ordering output of a pipeline stage.
+
+    Example:
+        >>> cpq = ClosablePriorityQueue()
+        >>> random_array = [random.randint(1,50) for _ in range(10)]
+        >>> output = list(Pipeline().from_iter(random_array, q_out=cpq))
+        >>> sorted(random_array) == output
+        True
     """
     pass
