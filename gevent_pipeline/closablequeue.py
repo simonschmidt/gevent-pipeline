@@ -86,3 +86,12 @@ class ClosableQueue(queue.Queue):
             return super().get(block=False)
         except Exception:
             return StopIteration
+
+class ClosablePriorityQueue(queue.PriorityQueue, ClosableQueue):
+    """
+    Mixes gevent's PriorityQueue with the ClosableQueue
+
+    Set as q_out to any pipeline step and join to order the input queue for the
+    next stage
+    """
+    pass
