@@ -232,7 +232,7 @@ def test_cpq_order_matches():
     randomized = ordered.copy()
     random.shuffle(randomized)
     cpq = ClosablePriorityQueue(fuzz=0.01)
-    for letter in ordered:
+    for letter in randomized:
         cpq.put(letter)
     for orig_el, queued in zip(ordered, cpq):
         assert orig_el == queued
