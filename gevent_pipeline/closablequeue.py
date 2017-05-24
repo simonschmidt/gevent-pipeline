@@ -94,6 +94,7 @@ class ClosablePriorityQueue(queue.PriorityQueue, ClosableQueue):
     This can be useful for ordering output of a pipeline stage.
 
     Example:
+        >>> from gevent_pipeline import Pipeline
         >>> cpq = ClosablePriorityQueue()
         >>> random_array = [random.randint(1,50) for _ in range(10)]
         >>> output = list(Pipeline().from_iter(random_array, q_out=cpq))
