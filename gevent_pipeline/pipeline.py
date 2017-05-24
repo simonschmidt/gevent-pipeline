@@ -295,7 +295,7 @@ class Pipeline:
             raise RuntimeError("Unexpected data on fold output channel")
         return result
 
-    def join(self):
+    def joinall(self):
         """
         Wait for the greenlets to finish
         Wrapper around gevent.joinall
@@ -306,4 +306,4 @@ class Pipeline:
         # TODO pass argumetns to .joinall and remove greenlets in done from _greenlets
         self._greenlets = []
 
-        return done
+        return self
