@@ -84,5 +84,5 @@ class ClosableQueue(queue.Queue):
         try:
             # Note: cannot use super().get_nowait here as that will just call this function again
             return super().get(block=False)
-        except Exception:
+        except queue.Empty:
             return StopIteration
