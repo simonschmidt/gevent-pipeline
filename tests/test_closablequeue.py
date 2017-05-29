@@ -1,4 +1,4 @@
-from gevent_pipeline import ClosableQueue
+from gevent_pipeline import ClosableQueue, ClosablePriorityQueue
 
 import gevent
 from gevent import queue
@@ -224,3 +224,15 @@ def test_cq_maxsize_racy():
     # No items lost
     n_ok_get = n_left_on_queue + n_got
     assert n_ok_get == n_ok_put
+
+def test_cpq_order_matches():
+    # Order of this list matches comparator order for strings.
+    #  Will be randomized and then reordered by the Queue
+    ordered = list('abcdefghijklmnopqrstuvwxyz')
+    randomized = ordered.copy()
+    random.shuffle(randomized)
+    cpq = ClosablePriorityQueue(fuzz=0.01)
+    for letter in randomized:
+        cpq.put(letter)
+    for orig_el, queued in zip(ordered, cpq):
+        assert orig_el == queued

@@ -1,4 +1,4 @@
-from gevent_pipeline import Pipeline, ClosableQueue, worker, forward_input
+from gevent_pipeline import Pipeline, ClosableQueue, ClosablePriorityQueue, worker, forward_input
 
 import gevent
 from gevent import queue
@@ -125,7 +125,7 @@ def test_pipeline_fromto_iter():
     l = sorted(p)
     assert l == [i*i for i in range(10)]
 
-    p.join()
+    p.joinall()
 
 
 def test_pipeline_sloppy_map():
@@ -143,3 +143,14 @@ def test_pipeline_sloppy_map():
     s_odd = sum(range(1, 100, 2))
     s_even = sum(2*i for i in range(0, 100, 2))
     assert sum(p) == s_odd + s_even
+
+def test_cpq_out_join_matches_order():
+    cpq = ClosablePriorityQueue()
+    original = [random.randint(0,1000) for _ in range(100)]
+    p = Pipeline()\
+        .from_iter(enumerate(original),n_workers=5)\
+        .map(lambda x: (x[0], x[1]*2), n_workers=10, q_out=cpq)\
+        .joinall()\
+        .map(lambda x: x[1], n_workers=1)
+    result = list(p)
+    assert result == [x*2 for x in original]
