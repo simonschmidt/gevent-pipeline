@@ -1,5 +1,6 @@
 import gevent
 from gevent import queue
+from functools import partial
 from collections import namedtuple
 
 from .closablequeue import ClosableQueue
@@ -26,6 +27,20 @@ def raise_(wec):
     Exception handler that raises the exception
     """
     raise
+
+
+def sorter(q_in, q_out, q_done, key=None, reverse=False):
+    """
+    Worker that sorts incoming data
+
+    Warning:
+        Will completely exhaust input queue before forwarding to output
+    """
+    for value in sorted(q_in, key=key, reverse=reverse):
+        q_out.put(value)
+
+    # Signal done
+    q_done.put(None)
 
 
 def worker(exception_handler=raise_, discard_none=False):
@@ -298,6 +313,32 @@ class Pipeline:
         if q_out.get() is not StopIteration:
             raise RuntimeError("Unexpected data on fold output channel")
         return result
+
+    def sort(self, key=None, reverse=False, maxsize=_unset):
+        """
+        Sort before passing on to the next stage
+
+        Warning:
+            Waits for all previous work to complete before feeding it to the next stage.
+
+        Example:
+            >>> import random
+            >>> values = [random.randint(-100, 100) for _ in range(100)]
+            >>> result = list(Pipeline().from_iter(values)
+            ...                         .sort(key=lambda x: abs(x))
+            ...                         .map(lambda x: x*x))
+            >>> assert result == sorted(x*x for x in values)
+
+        Arguments:
+            key: Same as builtin `sorted`
+            reverse: Same as builtin `sorted`
+            maxsize: Size of output queue
+        """
+        self.chain_workers(
+            partial(sorter, key=key, reverse=reverse),
+            n_workers=1,
+            maxsize=maxsize)
+        return self
 
     def join(self):
         """
