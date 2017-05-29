@@ -4,6 +4,7 @@ import gevent
 from gevent import queue
 
 import functools
+import itertools
 import pytest
 import random
 
@@ -143,3 +144,18 @@ def test_pipeline_sloppy_map():
     s_odd = sum(range(1, 100, 2))
     s_even = sum(2*i for i in range(0, 100, 2))
     assert sum(p) == s_odd + s_even
+
+
+def test_pipeline_filter():
+    bad_values = set((34, 'abc', False))
+    good_values = set((None, 31))
+
+    def f(x):
+        return x not in bad_values
+
+    p = (Pipeline()
+         .from_iter(itertools.chain(bad_values, good_values))
+         .filter(f))
+
+    result = set(p)
+    assert result == good_values

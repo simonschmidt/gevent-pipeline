@@ -43,9 +43,20 @@ def sorter(q_in, q_out, q_done, key=None, reverse=False):
     q_done.put(None)
 
 
+def filterer(condition, q_in, q_out, q_done):
+    """
+    Puts items from q_in to q_out if `condition(item)`
+    """
+    for item in q_in:
+        if condition(item):
+            q_out.put(item)
+
+    q_done.put(None)
+
+
 def worker(exception_handler=raise_, discard_none=False):
     """
-    Wraps a function to becomae suitable worker for Pipeline
+    Wraps a function to become a suitable worker for Pipeline
 
     Will feed the function input from q_in and pass output to q_out
 
@@ -251,13 +262,7 @@ class Pipeline:
 
         Returns: self
         """
-
-        @worker(discard_none=True)
-        def g(x):
-            if f(x):
-                return x
-
-        return self.chain_workers(g, *args, **kwargs)
+        return self.chain_workers(partial(filterer, f), *args, **kwargs)
 
     def map(self, f, *args, **kwargs):
         """
