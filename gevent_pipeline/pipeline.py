@@ -167,7 +167,7 @@ class Pipeline:
         w = gevent.spawn(f, *args, **kwargs)
         self._greenlets.append(w)
 
-    def chain_workers(self, f, n_workers=1, q_out=_unset):
+    def chain_workers(self, f, n_workers=1, q_out=_unset, maxsize=_unset):
         """
         Chain another set of workers
 
@@ -188,9 +188,13 @@ class Pipeline:
             f: Worker function
             n_workers: Number of greenlets to spawn
             q_out: Specify manual output queue, if unset creates new
+            maxsize: maxsize of created output queue (default 2 * n_workers)
         """
         if q_out is _unset:
-            q_out = ClosableQueue()
+            maxsize = maxsize if maxsize is not _unset else 2 * n_workers
+            q_out = ClosableQueue(maxsize=maxsize)
+        elif maxsize is not _unset:
+            raise ValueError("`maxsize` cannot be set together with `q_out`")
 
         q_start = queue.Queue()
         q_done = queue.Queue()
